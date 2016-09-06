@@ -6,7 +6,7 @@ import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-CONTEXT_SETTINGS = dict(auto_envvar_prefix='MONEY')
+CONTEXT_SETTINGS = dict(auto_envvar_prefix='MYFI')
 
 class Context:
 
@@ -48,7 +48,7 @@ class ComplexCLI(click.MultiCommand):
         try:
             if sys.version_info[0] == 2:
                 name = name.encode('ascii', 'replace')
-            mod = __import__('money.commands.cmd_' + name,
+            mod = __import__('myfi.commands.cmd_' + name,
                              None, None, ['cli'])
         except ImportError:
             return
@@ -71,7 +71,7 @@ def cli(ctx, verbose, database, new, echo):
         'sqlite:///{}'.format(database), echo=echo)
 
     if new:
-        from money.models import Base
+        from myfi.models import Base
         Base.metadata.create_all(ctx.dbengine)
 
     Session = sessionmaker(bind=ctx.dbengine)

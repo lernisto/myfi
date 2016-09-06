@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='money',
+    name='myfi',
     version='0.1.0',
     packages=find_packages(),
     include_package_data=True,
@@ -12,6 +12,6 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        money=money.cli:cli
+        myfi=myfi.cli:cli
     ''',
 )

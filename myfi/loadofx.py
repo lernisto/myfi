@@ -5,7 +5,7 @@ from ofxparse import OfxParser
 import datetime
 from decimal import Decimal
 
-from money.models import Account, Entry, Statement
+from myfi.models import Account, Entry, Statement
 
 ZERO = Decimal('0.00')
 
