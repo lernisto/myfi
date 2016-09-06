@@ -1,7 +1,6 @@
 import click
-from bs4 import BeautifulSoup
-from ofxparse import OfxParser
 
+from ofxparse import OfxParser
 
 import datetime
 from decimal import Decimal
@@ -15,10 +14,17 @@ ZERO = Decimal('0.00')
 
 
 @click.command()
-@click.argument('dest', nargs=1)
 @click.argument('src', nargs=-1)
-def main(dest, src):
-    engine = create_engine('sqlite:///{}'.format(dest), echo=False)
+@click.option('--database', '-d', default='test.db')
+@click.option('--new', is_flag=True, default=False)
+@click.option('--echo', is_flag=True, default=False)
+def loadofx(src, database, new, echo):
+    engine = create_engine('sqlite:///{}'.format(database), echo=echo)
+
+    if new:
+        from models import Base
+        Base.metadata.create_all(engine)
+
     Session = sessionmaker(bind=engine)
     session = Session()
 
@@ -40,7 +46,6 @@ def main(dest, src):
         )
 
         for tran in st.transactions:
-
             if tran.memo.startswith(tran.payee):
                 name = tran.memo.lower()
                 memo = None
@@ -69,4 +74,4 @@ def main(dest, src):
         session.commit()
 
 if __name__ == '__main__':
-    main()
+    loadofx()
