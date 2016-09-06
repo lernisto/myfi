@@ -12,9 +12,10 @@ session = Session()
 from models import Base, Account, Transaction, Statement
 Base.metadata.create_all(engine)
 
-acct = Account(rtn='324377516', number='644930~1', accttype=1)
-session.add(acct)
-t1 = Transaction(account=acct, dtposted=datetime.date.today(),
-                 trntype='debit', amount=Decimal("4.65"),
-                 name="Ridley's", memo='donuts')
-session.commit()
+if False:
+    acct = Account(rtn='324377516', number='644930~1', accttype=1)
+    session.add(acct)
+    t1 = Transaction(account=acct, dtposted=datetime.date.today(),
+                     trntype='debit', amount=Decimal("4.65"),
+                     name="Ridley's", memo='donuts')
+    session.commit()

@@ -36,14 +36,14 @@ Account.statements = relationship(
     "Statement", order_by=Statement.end_date, back_populates="account")
 
 
-class Transaction(Base):
-    __tablename__ = 'transactions'
+class Entry(Base):
+    __tablename__ = 'entries'
 
     id = Column(Integer, primary_key=True)
     statement_id = Column(Integer, ForeignKey("statements.id"))
-    statement = relationship("Statement", back_populates="transactions")
+    statement = relationship("Statement", back_populates="entries")
     account_id = Column(Integer, ForeignKey("accounts.id"))
-    account = relationship("Account", back_populates="transactions")
+    account = relationship("Account", back_populates="entries")
     dtorigin = Column(Date)
     dtposted = Column(Date)
     trntype = Column(String)
@@ -53,7 +53,18 @@ class Transaction(Base):
     name = Column(String)
     memo = Column(String)
 
-Statement.transactions = relationship(
-    'Transaction', order_by=Transaction.fitid, back_populates="statement")
-Account.transactions = relationship(
-    'Transaction', order_by=Transaction.fitid, back_populates="account")
+Statement.entries = relationship(
+    'Entry', order_by=Entry.fitid, back_populates="statement")
+Account.entries = relationship(
+    'Entry', order_by=Entry.fitid, back_populates="account")
+
+class Transaction(Base):
+    __tablename__ = 'transactions'
+
+    id = Column(Integer, primary_key=True)
+    seq = Column(Integer)
+    entry_id = Column(Integer, ForeignKey("entries.id"))
+#    entries = relationship("Entry", back_populates="transaction")
+
+#Entry.transaction = relationship(
+#    'Transaction', order_by=Transaction.seq, back_populates="transaction")
