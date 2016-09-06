@@ -58,6 +58,7 @@ Statement.entries = relationship(
 Account.entries = relationship(
     'Entry', order_by=Entry.fitid, back_populates="account")
 
+
 class Transaction(Base):
     __tablename__ = 'transactions'
 
@@ -66,5 +67,5 @@ class Transaction(Base):
     entry_id = Column(Integer, ForeignKey("entries.id"))
 #    entries = relationship("Entry", back_populates="transaction")
 
-#Entry.transaction = relationship(
+# Entry.transaction = relationship(
 #    'Transaction', order_by=Transaction.seq, back_populates="transaction")

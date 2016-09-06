@@ -9,6 +9,7 @@ from myfi.models import Account, Entry, Statement
 
 ZERO = Decimal('0.00')
 
+
 def loadofx(session, src):
     """Import OFX files into the database.
     """

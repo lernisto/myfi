@@ -8,6 +8,7 @@ from sqlalchemy.orm import sessionmaker
 
 CONTEXT_SETTINGS = dict(auto_envvar_prefix='MYFI')
 
+
 class Context:
 
     def __init__(self):
@@ -66,6 +67,7 @@ class ComplexCLI(click.MultiCommand):
               help='echo SQL commands (very noisy)')
 @pass_context
 def cli(ctx, verbose, database, new, echo):
+    ctx.verbose = verbose
 
     ctx.dbengine = create_engine(
         'sqlite:///{}'.format(database), echo=echo)
