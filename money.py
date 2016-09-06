@@ -13,12 +13,12 @@ from models import Account, Entry, Statement
 ZERO = Decimal('0.00')
 
 
-@click.command()
-@click.argument('src', nargs=-1)
-@click.option('--database', '-d', default='test.db')
-@click.option('--new', is_flag=True, default=False)
-@click.option('--echo', is_flag=True, default=False)
-def loadofx(src, database, new, echo):
+@click.group()
+@click.option('--database', '-d', default='test.db',metavar='DB',help='database file for storage')
+@click.option('--new', is_flag=True, default=False,help='initialize the database')
+@click.option('--echo', is_flag=True, default=False,help='echo SQL commands (very noisy)')
+@click.pass_context
+def main(ctx,database,new,echo):
     engine = create_engine('sqlite:///{}'.format(database), echo=echo)
 
     if new:
@@ -27,7 +27,14 @@ def loadofx(src, database, new, echo):
 
     Session = sessionmaker(bind=engine)
     session = Session()
+    ctx.obj = session
 
+@main.command()
+@click.pass_obj
+@click.argument('src', nargs=-1, metavar='<ofxfile>...')
+def loadofx(session, src):
+    """Import OFX files into the database.
+    """
     for fname in src:
         with open(fname, 'rb') as fi:
             o = OfxParser.parse(fi)
@@ -74,4 +81,4 @@ def loadofx(src, database, new, echo):
         session.commit()
 
 if __name__ == '__main__':
-    loadofx()
+    main()
