@@ -5,33 +5,10 @@ from ofxparse import OfxParser
 import datetime
 from decimal import Decimal
 
-import sqlalchemy
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from models import Account, Entry, Statement
+from money.models import Account, Entry, Statement
 
 ZERO = Decimal('0.00')
 
-
-@click.group()
-@click.option('--database', '-d', default='test.db',metavar='DB',help='database file for storage')
-@click.option('--new', is_flag=True, default=False,help='initialize the database')
-@click.option('--echo', is_flag=True, default=False,help='echo SQL commands (very noisy)')
-@click.pass_context
-def main(ctx,database,new,echo):
-    engine = create_engine('sqlite:///{}'.format(database), echo=echo)
-
-    if new:
-        from models import Base
-        Base.metadata.create_all(engine)
-
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    ctx.obj = session
-
-@main.command()
-@click.pass_obj
-@click.argument('src', nargs=-1, metavar='<ofxfile>...')
 def loadofx(session, src):
     """Import OFX files into the database.
     """
@@ -79,6 +56,3 @@ def loadofx(session, src):
 
         session.add(account)
         session.commit()
-
-if __name__ == '__main__':
-    main()
