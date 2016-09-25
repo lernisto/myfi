@@ -1,0 +1,48 @@
+A,110,cash
+A,111,allocated tithing
+A,112,allocated giving
+A,113,allocated saving
+A,114,allocated living
+A,119,allocated taxes 
+A,120,prepaid expenses
+A,130,accounts receivable
+A,140,supplies
+A,150,short term savings
+A,150,medium term savings
+A,160,emergency fund
+A,170,personal property
+A,180,real property
+A,190,retirement fund
+L,210,accounts payable
+Q,299,equity
+R,310,w-2 income
+R,320,self-employment income
+R,330,interest income
+R,380,gifts received
+E,510,giving
+E,511,tithing
+E,512,fast offering
+E,513,missionary
+E,514,temple patron
+E,515,perpetual education
+E,516,scouting
+E,518,other deductible giving
+E,519,non-deductible giving
+E,520,shelter
+E,530,food
+E,540,transportation
+E,550,wellness
+E,560,education
+E,570,personal
+E,580,recreation
+E,610,taxes
+E,611,Federal Income Tax
+E,612,FICA
+E,613,Medicare
+E,614,Self Employment Tax
+E,615,Capital Gains Tax
+E,616,State Income Tax
+E,617,Sales/Use Tax
+E,618,Property Tax
+E,710,insurance
+E,720,banking fees
