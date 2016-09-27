@@ -3,7 +3,7 @@
 SINGLE = 0
 import datetime
 from decimal import Decimal as D
-from simple import Entry
+from simple import Debit,Credit
 ZERO = D('0.00')
 
 
@@ -48,17 +48,15 @@ def f1040ez(ledger, balances, when, filestatus=SINGLE, dependents=0):
 
     if refund > ZERO:
         ledger.enter(when, 'Federal Income Tax Refund for {}'.format(when.year - 1),
-                     Entry(when, None, ledger.get_account(
-                         'cash'), True, refund, None),
-                     Entry(when, None, ledger.get_account(
-                         'Federal Tax Refund'), False, refund, None),
+                     Debit(when, ledger.get_account('cash'), refund),
+                     Credit(when, ledger.get_account(
+                         'Federal Tax Refund'), refund),
                      )
     else:
         then = datetime.date(when.year, 4, 15)
         ledger.enter(when, 'Federal Income Tax due for {}'.format(when.year - 1),
-                     Entry(then, None, fitacct, True, owe, None),
-                     Entry(then, None, ledger.get_account(
-                         'cash'), False, owe, None),
+                     Debit(then, fitacct, owe),
+                     Credit(then, ledger.get_account('cash'), owe),
                      )
 
     return dict(

@@ -14,7 +14,6 @@ eomonth = rrule(MONTHLY, dtstart=now, bymonthday=(31, -1), bysetpos=1)
 day = timedelta(1)
 week = timedelta(7)
 
-# DateSelect, Echo, Recurring, Ledger, ChartofAccounts, Mission, Tithing, D, Paycheck, bcm1, BCM,Savings
 from simple import *
 
 from f1040ez import f1040ez
@@ -28,20 +27,20 @@ def giveaway(ledger, when):
     giving = ledger.get_account('allocated giving')
     giveto = ledger.get_account('temple patron')
     give = ledger.get_balance(giving)
-    if give >ZERO:
-        ledger.enter(yesterday,'empty giving envelope',
-            Entry(now,None,giveto,True,give,None),
-            Entry(now,None,giving,False,give,None),
-            )
+    if give > ZERO:
+        ledger.enter(yesterday, 'empty giving envelope',
+                     Debit(now, giveto, give),
+                     Credit(now, giving, give),
+                     )
 
     living = ledger.get_account('allocated living')
     liveto = ledger.get_account('misc expenses')
     live = ledger.get_balance(living)
-    if live >ZERO:
-        ledger.enter(yesterday,'empty living envelope',
-            Entry(now,None,liveto,True,live,None),
-            Entry(now,None,living,False,live,None),
-            )
+    if live > ZERO:
+        ledger.enter(yesterday, 'empty living envelope',
+                     Debit(now, liveto, live),
+                     Credit(now, living, live),
+                     )
 
 
 def yearend(ledger, when):

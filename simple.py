@@ -105,6 +105,13 @@ class Entry:
             return '       {:30}        {:>10}  {}'.format(str(self.account), amount, memo)
 
 
+def Debit(dtorig, account, amount, memo=None):
+    return Entry(dtorig, None, account, True, amount, memo)
+
+
+def Credit(dtorig, account, amount, memo=None):
+    return Entry(dtorig, None, account, False, amount, memo)
+
 
 class Transaction(namedtuple('Transaction', 'tid,dtposted,memo,entries')):
 
@@ -371,9 +378,8 @@ class Mission(Recurring):
         source = ledger.get_account('midterm fund')
         destination = ledger.get_account('missionary')
         t = ledger.enter(when, 'pay mission fund',
-                         Entry(when, None, destination,
-                               True, self.amount, None),
-                         Entry(when, None, source, False, self.amount, None),)
+                         Debit(when, destination, self.amount),
+                         Credit(when, source, self.amount),)
         return t
 
 
@@ -397,19 +403,19 @@ class Savings(Recurring):
         if amount > ZERO:
             self.transactions.append(
                 ledger.enter(self.start, 'transfer to savings',
-                             Entry(now, None, self.dest, True, amount, None),
-                             Entry(now, None, source, False, amount, None)
+                             Debit(now, self.dest, amount),
+                             Credit(now, source, amount)
                              ))
 
     def service(self, ledger, now):
         # print(now,self.pbal,ledger.get_balance(self.dest))
         intr = (self.rate * self.pbal).quantize(ZERO)  # conservative estimate
         if intr > ZERO:
-            self.transactions.append(ledger.enter(now, 'interest payment',
-                                                  Entry(
-                                                      now, None, self.dest, True, intr, None),
-                                                  Entry(now, None, self.src,
-                                                        False, intr, '{}*{}%'.format(self.pbal, self.rate * 100))))
+            self.transactions.append(
+                ledger.enter(now, 'interest received',
+                             Debit(now, self.dest, intr),
+                             Credit(now, self.src, intr)
+                             ))
 
         self.pbal = ledger.get_balance(self.dest)
 
@@ -477,8 +483,8 @@ def paytithing(ledger, now):
     amount = ledger.get_balance(ttp).quantize(ZERO)
     if amount > ZERO:
         t = ledger.enter(now, 'pay thithing',
-                         Entry(now, None, tp, True, amount, None),
-                         Entry(now, None, ttp, False, amount, None),)
+                         Debit(now, tp, amount),
+                         Credit(now, ttp, amount),)
         return t
 
 
@@ -486,8 +492,8 @@ def paymission(ledger, now, amount):
     source = ledger.get_account('midterm fund')
     destination = ledger.get_account('missionary')
     t = ledger.enter(now, 'pay mission fund',
-                     Entry(now, None, destination, True, amount, None),
-                     Entry(now, None, source, False, amount, None),)
+                     Debit(now, destination, amount),
+                     Credit(now, source, amount),)
     return t
 
 
@@ -506,30 +512,30 @@ def bcm1(ledger, now, efundlevel=D('500.00')):
                 avail = cashbal + savebal
                 if avail < eneed:
                     ee = [
-                        Entry(now, None, efund, True, avail, None),
-                        Entry(now, None, save, False, savebal, None),
-                        Entry(now, None, cash, False, cashbal, None),
+                        Debit(now, efund, avail),
+                        Credit(now, save, savebal),
+                        Credit(now, cash, cashbal),
                     ]
                     savebal = cashbal = ZERO
                 else:
                     sc = eneed - savebal
                     ee = [
-                        Entry(now, None, efund, True, eneed, None),
-                        Entry(now, None, save, False, savebal, None),
-                        Entry(now, None, cash, False, sc, None),
+                        Debit(now, efund, eneed),
+                        Credit(now, save, savebal),
+                        Credit(now, cash, sc),
                     ]
                     savebal = ZERO
                     cashbal -= sc
             else:
                 ee = [
-                    Entry(now, None, efund, True, savebal, None),
-                    Entry(now, None, save, False, savebal, None),
+                    Debit(now, efund, savebal),
+                    Credit(now, save, savebal),
                 ]
                 savebal = ZERO
         else:
             ee = [
-                Entry(now, None, efund, True, eneed, None),
-                Entry(now, None, save, False, eneed, None),
+                Debit(now, efund, eneed),
+                Credit(now, save, eneed),
             ]
             savebal -= eneed
 
@@ -541,15 +547,15 @@ def bcm1(ledger, now, efundlevel=D('500.00')):
 
         if lneed > ZERO:
             ledger.enter(now, 'allocate for living expenses',
-                         Entry(now, None, lfund, True, lneed, None),
-                         Entry(now, None, cash, False, lneed, None),
+                         Debit(now, lfund, lneed),
+                         Credit(now, cash, lneed),
                          )
             cashbal -= lneed
         # sweep everything else into midterm savings
         mfund = ledger.get_account('midterm fund')
         ledger.enter(now, 'save for mission',
-                     Entry(now, None, mfund, True, cashbal, None),
-                     Entry(now, None, cash, False, cashbal, None),
+                     Debit(now, mfund, cashbal),
+                     Credit(now, cash, cashbal),
                      )
 
     # sweep 15% saving into Roth IRA
@@ -558,6 +564,6 @@ def bcm1(ledger, now, efundlevel=D('500.00')):
     if savebal > ZERO:
         rfund = ledger.get_account('Roth IRA')
         ledger.enter(now, 'save for retirement',
-                     Entry(now, None, rfund, True, savebal, None),
-                     Entry(now, None, save, False, savebal, None),
+                     Debit(now, rfund, savebal),
+                     Credit(now, save, savebal),
                      )
