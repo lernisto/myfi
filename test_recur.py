@@ -14,10 +14,21 @@ eomonth = rrule(MONTHLY, dtstart=now, bymonthday=(31, -1), bysetpos=1)
 day = timedelta(1)
 week = timedelta(7)
 
-from simple import DateSelect, Echo, Recurring, Ledger, ChartofAccounts, Mission, Tithing, D, Paycheck, bcm1, BCM,Savings
+from simple import * #DateSelect, Echo, Recurring, Ledger, ChartofAccounts, Mission, Tithing, D, Paycheck, bcm1, BCM,Savings
+
+from f1040ez import f1040ez
+
 coa = ChartofAccounts()
 coa.load_csv('accounts.csv')
 
+def yearend(ledger,when):
+    yesterday = when+relativedelta(days=-1)
+    print("year end: {}".format(yesterday.date()))
+
+    balances = ledger.balances.copy()
+    closing_entries(ledger,yesterday)
+    f1040ez(ledger,balances,when+relativedelta(months=1))
+    
 t1 = now
 t2 = datetime(now.year, 6, 1) + relativedelta(days=1, weekday=TH)
 t3 = t2 + week
@@ -65,6 +76,7 @@ ds = DateSelect([
         coa.get('interest earned'),coa.get('midterm fund'),D('0.0065')/12
     ),
     BCM(rrule(WEEKLY, dtstart=t1, until=eop, byweekday=TH), bcm1),
+    BCM(rrule(YEARLY, dtstart=t1+relativedelta(years=1), until=eop),yearend),
 ])
 ledger = Ledger(coa, None)
 for v in ds.service_loop(ledger, eop):
