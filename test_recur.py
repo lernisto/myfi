@@ -33,6 +33,7 @@ t12 = datetime(now.year + 2, 6, 1) + relativedelta(days=1, weekday=TH)
 t13 = t12 + week
 t14 = datetime(now.year + 2, 8, 31) + relativedelta(weekday=MO(-1))
 t15 = t14 + week
+t16 = t15 + relativedelta(years=2)
 
 startofmonth=rrule(MONTHLY,dtstart=t1,bymonthday=1,until=eop)
 ds = DateSelect([
@@ -52,6 +53,8 @@ ds = DateSelect([
                    until=t14, byweekday=TH), "IFG", D('40.0'), D('12.50')),
     Mission(rrule(MONTHLY, dtstart=t15,
                   count=24), D('450.00')),
+    Paycheck(rrule(WEEKLY, dtstart=t16,
+                   until=eop, byweekday=TH), "IFF", D('40.0'), D('13.50')),
     Savings(startofmonth,
         coa.get('non-taxable interest'),coa.get('Roth IRA'),D('0.12')/12
     ),
@@ -62,7 +65,6 @@ ds = DateSelect([
         coa.get('interest earned'),coa.get('midterm fund'),D('0.0065')/12
     ),
     BCM(rrule(WEEKLY, dtstart=t1, until=eop, byweekday=TH), bcm1),
-    Echo(eomonth, "{1} end of month")
 ])
 ledger = Ledger(coa, None)
 for v in ds.service_loop(ledger, eop):
