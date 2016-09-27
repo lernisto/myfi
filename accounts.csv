@@ -3,19 +3,17 @@ A,111,allocated tithing
 A,112,allocated giving
 A,113,allocated saving
 A,114,allocated living
-A,115,emergency fund
-A,116,midterm fund
-A,117,Roth IRA
 A,119,allocated taxes
 A,120,prepaid expenses
 A,130,accounts receivable
 A,140,supplies
 A,150,short term savings
-A,150,medium term savings
-A,160,emergency fund
+A,155,emergency fund
+A,160,midterm fund
 A,170,personal property
 A,180,real property
 A,190,retirement fund
+A,191,Roth IRA
 L,210,accounts payable
 Q,299,equity
 R,310,w-2 income
@@ -39,8 +37,10 @@ E,550,wellness
 E,560,education
 E,570,personal
 E,580,recreation
+E,590,misc expenses
 E,610,taxes
 E,611,Federal Income Tax
+E,611.1,Federal Tax Refund
 E,612,FICA
 E,613,Medicare
 E,614,Self Employment Tax

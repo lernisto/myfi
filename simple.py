@@ -105,6 +105,7 @@ class Entry:
             return '       {:30}        {:>10}  {}'.format(str(self.account), amount, memo)
 
 
+
 class Transaction(namedtuple('Transaction', 'tid,dtposted,memo,entries')):
 
     def __str__(self):
@@ -171,9 +172,15 @@ class Ledger:
             print('balances as of {}'.format(self.transactions[-1].dtposted))
 
 
-def closing_entries(ledger, now):
+def bynumber(pair):
+    return pair[0].number
+
+
+def closing_entries(ledger, now, period='year'):
+    now = now.date()
     bal = ledger.balances
     coa = ledger.coa
+
     income = []
     expense = []
 
@@ -184,6 +191,8 @@ def closing_entries(ledger, now):
             income.append((acct, val))
         elif isinstance(acct, ExpenseAccount):
             expense.append((acct, val))
+    income.sort(key=bynumber)
+    expense.sort(key=bynumber)
 
     ie = []
     rsummary = ZERO
@@ -203,20 +212,57 @@ def closing_entries(ledger, now):
         ee.insert(0, Entry(now, now, incomesummary, True, esummary, None))
         ledger.enter(now, 'close expense accounts', *ee)
 
-    print('\nIncome Summary for {} to {}'.format(
-        ledger.transactions[0].dtposted, ledger.transactions[-1].dtposted))
+    print('\nIncome Summary for {} ending {}'.format(period, now))
     print('Income')
     for acct, v in income:
-        print('{} {}'.format(str(acct), v))
+        print('{:30} {:>10}'.format(str(acct), v.quantize(ZERO)))
+    print('total income:                             {:>10}'.format(rsummary))
     print('Expenses')
     for acct, v in expense:
-        print('{} {}'.format(str(acct), v))
+        print('{:30} {:>10}'.format(str(acct), v.quantize(ZERO)))
+    print('total expenses:                           {:>10}'.format(esummary))
 
-    ni = rsummary - esummary
+    ni = (rsummary - esummary).quantize(ZERO)
     if ni >= ZERO:
-        print('Net income: {}'.format(ni))
+        print('Net income:                               {:>10}'.format(ni))
     else:
-        print('Net loss: ({})'.format(-ni))
+        print('Net loss:                                ({:>10})'.format(-ni))
+
+    print('\nBalance Sheet as of {}'.format(now))
+    asset = []
+    liability = []
+    equity = []
+    for acct, val in bal.items():
+        if isinstance(acct, AssetAccount):
+            asset.append((acct, val.quantize(ZERO)))
+        elif isinstance(acct, LiabilityAccount):
+            liability.append((acct, val.quantize(ZERO)))
+        elif isinstance(acct, EquityAccount):
+            equity.append((acct, val.quantize(ZERO)))
+
+    asset.sort(key=bynumber)
+    acc1 = ZERO
+    for acct, v in asset:
+        acc1 += v
+        print('{:30} {:>10}'.format(str(acct), v))
+    print('  total assets:                           {:>10}\n'.format(acc1))
+
+    liability.sort(key=bynumber)
+    acc2 = ZERO
+    for acct, v in liability:
+        acc2 += v
+        print('{:30} {:>10}'.format(str(acct), v))
+    print('  total liabilities:                      {:>10}\n'.format(acc2))
+
+    equity.sort(key=bynumber)
+    acc3 = ZERO
+    for acct, v in equity:
+        acc3 += v
+        print('{:30} {:>10}'.format(str(acct), v))
+    print('  total equity:                           {:>10}\n'.format(acc3))
+
+    print(
+        '  total liabilities+equity:               {:>10}\n'.format(acc2 + acc3))
 
 
 def balance_forward(balances):
@@ -266,10 +312,10 @@ class DateSelect:
             when, what = pending[0]
             if when > until:
                 break
-            #try:
+            # try:
             v = what.service(ledger, when)
             yield v, what, when
-            #except Exception as e:
+            # except Exception as e:
             #    yield e, what, when
             try:
                 when = next(what)
@@ -356,40 +402,42 @@ class Savings(Recurring):
                              ))
 
     def service(self, ledger, now):
-        #print(now,self.pbal,ledger.get_balance(self.dest))
-        intr = (self.rate * self.pbal).quantize(ZERO) # conservative estimate
-        if intr>ZERO:
+        # print(now,self.pbal,ledger.get_balance(self.dest))
+        intr = (self.rate * self.pbal).quantize(ZERO)  # conservative estimate
+        if intr > ZERO:
             self.transactions.append(ledger.enter(now, 'interest payment',
-                Entry(now, None, self.dest, True, intr, None),
-                Entry(now, None, self.src,
-                      False, intr, '{}*{}%'.format(self.pbal, self.rate * 100))))
+                                                  Entry(
+                                                      now, None, self.dest, True, intr, None),
+                                                  Entry(now, None, self.src,
+                                                        False, intr, '{}*{}%'.format(self.pbal, self.rate * 100))))
 
         self.pbal = ledger.get_balance(self.dest)
+
 
 class Paycheck(Recurring):
 
     def __init__(self, recur, name, hours, rate):
         super(Paycheck, self).__init__(recur)
-        self.name=name
-        self.hours=hours
-        self.rate=rate
+        self.name = name
+        self.hours = hours
+        self.rate = rate
 
     def service(self, ledger, when):
         return payday(ledger, when, self.hours, self.rate, self.name)
 
 
 def payday(ledger, now, hours, rate, source):
-    gross=(hours * rate).quantize(ZERO)
-    tithe=gross * TITHE
-    fit=(gross * TITHE).quantize(ZERO)  # XXX too simple
-    fica=(gross * FICA).quantize(ZERO)
-    medi=(gross * MEDI).quantize(ZERO)
-    net=gross - fica - medi - fit
+    gross = (hours * rate).quantize(ZERO)
+    tithe = gross * TITHE
+    fit = (gross * TITHE).quantize(ZERO)  # XXX too simple
+    fica = (gross * FICA).quantize(ZERO)
+    medi = (gross * MEDI).quantize(ZERO)
+    net = gross - fica - medi - fit
 
-    cash=ledger.get_account('cash')
+    cash = ledger.get_account('cash')
 
-    income=ledger.get_account('w-2 income')
-    ttp=ledger.get_account('allocated tithing')
+    income = ledger.get_account('w-2 income')
+    ttp = ledger.get_account('allocated tithing')
     ledger.enter(now, 'paycheck from {}'.format(source),
                  Entry(now, now, cash, True, net, 'net deposit'),
                  Entry(now, now, ledger.get_account('Federal Income Tax'), True, fit,
@@ -407,13 +455,13 @@ def payday(ledger, now, hours, rate, source):
                  Entry(now, now, cash, False, tithe, None),
                  )
 
-    giving=tithe / 2
+    giving = tithe / 2
     ledger.enter(now, 'reserve other giving',
                  Entry(now, now, ledger.get_account(
                      'allocated giving'), True, giving, None),
                  Entry(now, now, cash, False, giving, None),
                  )
-    saving=tithe + giving
+    saving = tithe + giving
     ledger.enter(now, 'reserve saving',
                  Entry(now, now, ledger.get_account(
                      'allocated saving'), True, saving, None),
@@ -424,45 +472,72 @@ def payday(ledger, now, hours, rate, source):
 
 
 def paytithing(ledger, now):
-    ttp=ledger.get_account('allocated tithing')
-    tp=ledger.get_account('tithing')
-    amount=ledger.get_balance(ttp).quantize(ZERO)
+    ttp = ledger.get_account('allocated tithing')
+    tp = ledger.get_account('tithing')
+    amount = ledger.get_balance(ttp).quantize(ZERO)
     if amount > ZERO:
-        t=ledger.enter(now, 'pay thithing',
+        t = ledger.enter(now, 'pay thithing',
                          Entry(now, None, tp, True, amount, None),
                          Entry(now, None, ttp, False, amount, None),)
         return t
 
 
 def paymission(ledger, now, amount):
-    source=ledger.get_account('midterm fund')
-    destination=ledger.get_account('missionary')
-    t=ledger.enter(now, 'pay mission fund',
+    source = ledger.get_account('midterm fund')
+    destination = ledger.get_account('missionary')
+    t = ledger.enter(now, 'pay mission fund',
                      Entry(now, None, destination, True, amount, None),
                      Entry(now, None, source, False, amount, None),)
     return t
 
 
-def bcm1(ledger, now):
+def bcm1(ledger, now, efundlevel=D('500.00')):
     paytithing(ledger, now)
-    efund=ledger.get_account('emergency fund')
-    ebal=ledger.get_balance(efund)
-    cash=ledger.get_account('cash')
-    cashbal=ledger.get_balance(cash)
-    eneed=D('500.00') - ebal
+    efund = ledger.get_account('emergency fund')
+    ebal = ledger.get_balance(efund)
+    cash = ledger.get_account('cash')
+    cashbal = ledger.get_balance(cash)
+    save = ledger.get_account('allocated saving')
+    savebal = ledger.get_balance(save)
+    eneed = efundlevel - ebal
     if eneed > ZERO:
-        have=cashbal - eneed
-        eadd=cashbal if have < ZERO else eneed
+        if eneed > savebal:
+            if cashbal > ZERO:
+                avail = cashbal + savebal
+                if avail < eneed:
+                    ee = [
+                        Entry(now, None, efund, True, avail, None),
+                        Entry(now, None, save, False, savebal, None),
+                        Entry(now, None, cash, False, cashbal, None),
+                    ]
+                    savebal = cashbal = ZERO
+                else:
+                    sc = eneed - savebal
+                    ee = [
+                        Entry(now, None, efund, True, eneed, None),
+                        Entry(now, None, save, False, savebal, None),
+                        Entry(now, None, cash, False, sc, None),
+                    ]
+                    savebal = ZERO
+                    cashbal -= sc
+            else:
+                ee = [
+                    Entry(now, None, efund, True, savebal, None),
+                    Entry(now, None, save, False, savebal, None),
+                ]
+                savebal = ZERO
+        else:
+            ee = [
+                Entry(now, None, efund, True, eneed, None),
+                Entry(now, None, save, False, eneed, None),
+            ]
+            savebal -= eneed
 
-        ledger.enter(now, 'transfer to emergency fund',
-                     Entry(now, None, efund, True, eadd, None),
-                     Entry(now, None, cash, False, eadd, None),
-                     )
-        cashbal -= eadd
+        ledger.enter(now, 'transfer to emergency fund', *ee)
 
     if cashbal > ZERO:
-        lfund=ledger.get_account('allocated living')
-        lneed=cashbal * D('0.03')  # 3 percent of disposable income
+        lfund = ledger.get_account('allocated living')
+        lneed = cashbal * D('0.03')  # 3 percent of disposable income
 
         if lneed > ZERO:
             ledger.enter(now, 'allocate for living expenses',
@@ -471,17 +546,17 @@ def bcm1(ledger, now):
                          )
             cashbal -= lneed
         # sweep everything else into midterm savings
-        mfund=ledger.get_account('midterm fund')
+        mfund = ledger.get_account('midterm fund')
         ledger.enter(now, 'save for mission',
                      Entry(now, None, mfund, True, cashbal, None),
                      Entry(now, None, cash, False, cashbal, None),
                      )
 
     # sweep 15% saving into Roth IRA
-    save=ledger.get_account('allocated saving')
-    savebal=ledger.get_balance(save)
+    save = ledger.get_account('allocated saving')
+    savebal = ledger.get_balance(save)
     if savebal > ZERO:
-        rfund=ledger.get_account('Roth IRA')
+        rfund = ledger.get_account('Roth IRA')
         ledger.enter(now, 'save for retirement',
                      Entry(now, None, rfund, True, savebal, None),
                      Entry(now, None, save, False, savebal, None),
