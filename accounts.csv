@@ -20,7 +20,8 @@ L,210,accounts payable
 Q,299,equity
 R,310,w-2 income
 R,320,self-employment income
-R,330,interest income
+R,330,interest earned
+R,331,non-taxable interest
 R,380,gifts received
 E,510,giving
 E,511,tithing

@@ -14,7 +14,7 @@ eomonth = rrule(MONTHLY, dtstart=now, bymonthday=(31, -1), bysetpos=1)
 day = timedelta(1)
 week = timedelta(7)
 
-from simple import DateSelect, Echo, Recurring, Ledger, ChartofAccounts, Mission, Tithing, D, Paycheck, bcm1, BCM
+from simple import DateSelect, Echo, Recurring, Ledger, ChartofAccounts, Mission, Tithing, D, Paycheck, bcm1, BCM,Savings
 coa = ChartofAccounts()
 coa.load_csv('accounts.csv')
 
@@ -34,7 +34,7 @@ t13 = t12 + week
 t14 = datetime(now.year + 2, 8, 31) + relativedelta(weekday=MO(-1))
 t15 = t14 + week
 
-
+startofmonth=rrule(MONTHLY,dtstart=t1,bymonthday=1,until=eop)
 ds = DateSelect([
     Paycheck(rrule(WEEKLY, dtstart=t1,
                    until=t2, byweekday=TH), "IFA", D('16.0'), D('7.25')),
@@ -52,6 +52,15 @@ ds = DateSelect([
                    until=t14, byweekday=TH), "IFG", D('40.0'), D('12.50')),
     Mission(rrule(MONTHLY, dtstart=t15,
                   count=24), D('450.00')),
+    Savings(startofmonth,
+        coa.get('non-taxable interest'),coa.get('Roth IRA'),D('0.12')/12
+    ),
+    Savings(startofmonth,
+        coa.get('interest earned'),coa.get('emergency fund'),D('0.0065')/12
+    ),
+    Savings(startofmonth,
+        coa.get('interest earned'),coa.get('midterm fund'),D('0.0065')/12
+    ),
     BCM(rrule(WEEKLY, dtstart=t1, until=eop, byweekday=TH), bcm1),
     Echo(eomonth, "{1} end of month")
 ])
