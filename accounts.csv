@@ -3,7 +3,10 @@ A,111,allocated tithing
 A,112,allocated giving
 A,113,allocated saving
 A,114,allocated living
-A,119,allocated taxes 
+A,115,emergency fund
+A,116,midterm fund
+A,117,Roth IRA
+A,119,allocated taxes
 A,120,prepaid expenses
 A,130,accounts receivable
 A,140,supplies
