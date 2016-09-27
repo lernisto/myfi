@@ -195,9 +195,9 @@ def closing_entries(ledger, now, period='year'):
 
     for acct, val in bal.items():
         if isinstance(acct, RevenueAccount):
-            income.append((acct, val))
+            income.append((acct, val.quantize(ZERO)))
         elif isinstance(acct, ExpenseAccount):
-            expense.append((acct, val))
+            expense.append((acct, val.quantize(ZERO)))
     income.sort(key=bynumber)
     expense.sort(key=bynumber)
 
